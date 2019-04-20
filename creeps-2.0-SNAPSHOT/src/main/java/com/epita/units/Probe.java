@@ -1,11 +1,13 @@
 package com.epita.units;
 
 import com.epita.Game;
+import com.epita.callables.CallableSpawnReport;
 import com.epita.creeps.given.vo.report.MoveReport;
 import com.epita.creeps.given.vo.report.Report;
+import com.epita.creeps.given.vo.report.ScanReport;
 import com.epita.creeps.given.vo.report.SpawnReport;
 import com.epita.creeps.given.vo.response.CommandResponse;
-import com.epita.tools.CallableReport;
+import com.epita.callables.CallableReport;
 import com.epita.tools.GenericRequest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
@@ -13,6 +15,8 @@ import com.epita.creeps.given.vo.geometry.Point;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static com.epita.creeps.given.vo.report.Report.Status.SUCCESS;
 
 /**
  * Created by: Matthieu Archambault
@@ -27,20 +31,18 @@ public class Probe extends MovingUnits
         this.agentId = agentId;
         this.name = "probe";
     }
-    public SpawnReport sendCommandGetReport2(String cmd, int waitTime) throws ExecutionException, InterruptedException {
 
-        ScheduledFuture<SpawnReport> report = this.game.getTpe().schedule(new CallableReport(this, this.sendCommand(cmd).reportId)
-                , waitTime, TimeUnit.SECONDS);
-        return report.get();
+
+    public void initNexus() throws UnirestException, ExecutionException, InterruptedException {
+        SpawnReport report =  sendCommandGetSpawnReport("/spawn:nexus", 10);
+        if (report.status == SUCCESS)
+            this.game.getUnitList().add(new Observer(this.game, report.agentLocation, report.spawnedAgentId));
     }
 
-    public SpawnReport initNexus() throws UnirestException, ExecutionException, InterruptedException {
-        return sendCommandGetReport2("/spawn:nexus", 10);
-    }
-
-    public SpawnReport initPhotonCanon() throws UnirestException, ExecutionException, InterruptedException {
-        return sendCommandGetReport2("spawn:photoncannon", 5);
-
+    public void initPhotonCanon() throws UnirestException, ExecutionException, InterruptedException {
+        SpawnReport report = sendCommandGetSpawnReport("spawn:photoncannon", 5);
+        if (report.status == SUCCESS)
+            this.game.getUnitList().add(new Observer(this.game, report.agentLocation, report.spawnedAgentId));
     }
 
 
