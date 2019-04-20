@@ -11,6 +11,8 @@ import com.epita.tools.GenericRequest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
 import com.epita.creeps.given.vo.geometry.Point;
+
+import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -55,11 +57,13 @@ public class Nexus extends Unit
     public boolean initObserver() throws UnirestException, ExecutionException, InterruptedException {
         SpawnReport report =  sendCommandGetSpawnReport("/spawn:observer", 5);
         if (report.status == SUCCESS) {
-            this.game.getUnitList().add(new Probe(this.game, report.agentLocation, report.spawnedAgentId));
+            this.game.getUnitList().add(new Observer(this.game, report.agentLocation, report.spawnedAgentId));
             return true;
         }
         return false;
     }
+
+
 
 
 
