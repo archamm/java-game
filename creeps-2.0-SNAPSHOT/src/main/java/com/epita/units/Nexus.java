@@ -1,11 +1,12 @@
 package com.epita.units;
 
 import com.epita.Game;
+import com.epita.callables.CallableSpawnReport;
 import com.epita.creeps.given.vo.report.MoveReport;
 import com.epita.creeps.given.vo.report.Report;
 import com.epita.creeps.given.vo.report.SpawnReport;
 import com.epita.creeps.given.vo.response.CommandResponse;
-import com.epita.tools.CallableReport;
+import com.epita.callables.CallableReport;
 import com.epita.tools.GenericRequest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
@@ -13,6 +14,8 @@ import com.epita.creeps.given.vo.geometry.Point;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static com.epita.creeps.given.vo.report.Report.Status.SUCCESS;
 
 /**
  * Created by: Matthieu Archambault
@@ -28,28 +31,25 @@ public class Nexus extends Unit
         this.name = "Nexus";
     }
 
-    public SpawnReport sendCommandGetReport(String cmd, int waitTime) throws ExecutionException, InterruptedException {
 
-        ScheduledFuture<SpawnReport> report = this.game.getTpe().schedule(new CallableReport(this, this.sendCommand(cmd).reportId)
-                , waitTime, TimeUnit.SECONDS);
+    public void initProbe() throws UnirestException, ExecutionException, InterruptedException {
+        SpawnReport report = sendCommandGetSpawnReport("/spawn:probe", 3);
+        if (report.status == SUCCESS)
+            this.game.getUnitList().add(new Probe(this.game, report.agentLocation, report.spawnedAgentId));
 
-        SpawnReport report1 =  report.get();
-        return report1;
-    }
-
-    public SpawnReport initProbe() throws UnirestException, ExecutionException, InterruptedException {
-        return sendCommandGetReport("/spawn:probe", 3);
 
     }
 
-    public SpawnReport initDragoon() throws UnirestException, ExecutionException, InterruptedException {
-        return sendCommandGetReport("/spawn:dragoon", 2);
-
+    public void initDragoon() throws UnirestException, ExecutionException, InterruptedException {
+        SpawnReport report = sendCommandGetSpawnReport("/spawn:dragoon", 2);
+        if (report.status == SUCCESS)
+            this.game.getUnitList().add(new Dragoon(this.game, report.agentLocation, report.spawnedAgentId));
     }
 
-    public SpawnReport initObserver() throws UnirestException, ExecutionException, InterruptedException {
-        return sendCommandGetReport("/spawn:observer", 5);
-
+    public void initObserver() throws UnirestException, ExecutionException, InterruptedException {
+        SpawnReport report =  sendCommandGetSpawnReport("/spawn:observer", 5);
+        if (report.status == SUCCESS)
+            this.game.getUnitList().add(new Observer(this.game, report.agentLocation, report.spawnedAgentId));
     }
 
 
