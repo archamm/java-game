@@ -11,6 +11,7 @@ public class Dragoon extends MovingUnits
 {
     public Dragoon(Game game, Point coordinates, String agentId)
     {
+        this.action = false;
         this.game = game;
         this.coordinates = coordinates;
         this.agentId = agentId;

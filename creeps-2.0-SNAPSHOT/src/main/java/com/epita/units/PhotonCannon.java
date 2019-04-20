@@ -11,6 +11,7 @@ public class PhotonCannon extends MovingUnits{
 
     public PhotonCannon(Game game, Point coordinates, String agentId)
     {
+        this.action = false;
         this.game = game;
         this.coordinates = coordinates;
         this.agentId = agentId;

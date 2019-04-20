@@ -8,6 +8,9 @@ import com.epita.creeps.given.vo.geometry.Hexahedron;
 import com.epita.creeps.given.vo.geometry.Point;
 import com.epita.creeps.given.vo.report.MoveReport;
 import com.epita.creeps.given.vo.report.ScanReport;
+import com.epita.creeps.given.vo.report.SpawnReport;
+import com.epita.creeps.given.vo.response.CommandResponse;
+import com.epita.tools.GenericRequest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
 import java.util.Comparator;
@@ -25,80 +28,73 @@ import static com.epita.creeps.given.vo.report.Report.Status.SUCCESS;
  */
 public class MovingUnits extends Unit
 {
-    public MoveReport sendCommandGetMoveReport(String cmd, int waitTime) throws ExecutionException, InterruptedException {
-        
-        ScheduledFuture<MoveReport> report = this.game.getTpe().schedule(new CallableMoveReport(this, this.sendCommand(cmd).reportId)
+    public void sendCommandGetMoveReport(String move, int waitTime) throws ExecutionException, InterruptedException {
+        if (action)
+            return;
+        action = true;
+        CommandResponse response = sendCommand("/move:" + move);
+        this.game.getTpe().schedule(() -> {
+                    try {
+                        MoveReport res = GenericRequest.genericGet(this.getGame().getUrl()
+                                + "/report/" + response.reportId, MoveReport.class);
+                        if (res.status != SUCCESS) {
+                            this.action = false;
+                            return;
+                        }
+                        if (move.equals("up"))
+                            coordinates = coordinates.plus(0, 1, 0);
+                        if (move.equals("down"))
+                            coordinates = coordinates.plus(0, -1, 0);
+                        if (move.equals("east"))
+                            coordinates = coordinates.plus(1, 0, 0);
+                        if (move.equals("west"))
+                            coordinates = coordinates.plus(-1, 0, 0);
+                        if (move.equals("north"))
+                            coordinates = coordinates.plus(0, 0, 1);
+                        if (move.equals("south"))
+                            coordinates = coordinates.plus(0, 0, -1);
+
+                        System.out.println(coordinates.toString());
+
+                        this.action = false;
+                    } catch (UnirestException e) {
+                        e.printStackTrace();
+                    }
+                }
                 , 1000 * waitTime / this.game.getTickrate(), TimeUnit.MILLISECONDS);
-        return report.get();
     }
 
 
-    public boolean moveUnitUp() throws UnirestException, ExecutionException, InterruptedException {
-        MoveReport report = sendCommandGetMoveReport( "/move:up", 1);
-        if (report.status == SUCCESS)
-        {
-            searchAndReplaceCoordinates(report.agentLocation);
-            return true;
-        }
-        return false;
+
+    public void moveUnitUp() throws UnirestException, ExecutionException, InterruptedException {
+        sendCommandGetMoveReport("up", 1);
     }
 
-    public boolean moveUnitDown() throws UnirestException, ExecutionException, InterruptedException {
-        MoveReport report = sendCommandGetMoveReport( "/move:down", 1);
-        if (report.status == SUCCESS)
-        {
-            searchAndReplaceCoordinates(report.agentLocation);
-            return true;
-        }
-        return false;
+    public void moveUnitDown() throws UnirestException, ExecutionException, InterruptedException {
+        sendCommandGetMoveReport("down", 1);
+
     }
 
-    public boolean moveUnitEast() throws UnirestException, ExecutionException, InterruptedException {
-        MoveReport report = sendCommandGetMoveReport( "/move:east", 1);
-        if (report.status == SUCCESS)
-        {
-            searchAndReplaceCoordinates(report.agentLocation);
-            return true;
-        }
-        return false;
+    public void moveUnitEast() throws UnirestException, ExecutionException, InterruptedException {
+        sendCommandGetMoveReport("east", 1);
+
     }
 
-    public boolean moveUnitWest() throws UnirestException, ExecutionException, InterruptedException {
-        MoveReport report = sendCommandGetMoveReport( "/move:west", 1);
-        if (report.status == SUCCESS)
-        {
-            searchAndReplaceCoordinates(report.agentLocation);
-            return true;
-        }
-        return false;
+    public void moveUnitWest() throws UnirestException, ExecutionException, InterruptedException {
+        sendCommandGetMoveReport("west", 1);
+
     }
 
-    public boolean moveUnitNorth() throws UnirestException, ExecutionException, InterruptedException {
-        MoveReport report = sendCommandGetMoveReport( "/move:north", 1);
-        if (report.status == SUCCESS)
-        {
-            searchAndReplaceCoordinates(report.agentLocation);
-            return true;
-        }
-        return false;
+    public void moveUnitNorth() throws UnirestException, ExecutionException, InterruptedException {
+        sendCommandGetMoveReport("north", 1);
+
     }
 
-    public boolean moveUnitSouth() throws UnirestException, ExecutionException, InterruptedException {
-        MoveReport report = sendCommandGetMoveReport( "/move:south", 1);
-        if (report.status == SUCCESS)
-        {
-            searchAndReplaceCoordinates(report.agentLocation);
-            return true;
-        }
-        return false;
+    public void moveUnitSouth() throws UnirestException, ExecutionException, InterruptedException {
+        sendCommandGetMoveReport("south", 1);
+
     }
 
-    public ScanReport sendCommandGetScanReport(String cmd, int waitTime) throws ExecutionException, InterruptedException {
-
-        ScheduledFuture<ScanReport> report = this.game.getTpe().schedule(new CallableScanReport(this, this.sendCommand(cmd).reportId)
-                , waitTime, TimeUnit.SECONDS);
-            return report.get();
-    }
 
     public boolean findAnyMineralMine()
     {
@@ -106,12 +102,8 @@ public class MovingUnits extends Unit
     }
 
     public void goToBlock(Point location) throws InterruptedException, ExecutionException, UnirestException {
-        System.out.println(location.toString());
-        System.out.println(this.coordinates.toString());
         while (!this.coordinates.equals(location))
         {
-            System.out.println(location.toString());
-            System.out.println(this.coordinates.toString());
             int disx = location.x - this.coordinates.x;
             int disy = location.y - this.coordinates.y;
             int disz = location.z - this.coordinates.z;
@@ -136,7 +128,6 @@ public class MovingUnits extends Unit
                 else
                     this.moveUnitNorth();
             }
-
         }
     }
 
@@ -145,7 +136,7 @@ public class MovingUnits extends Unit
         return Math.abs(location.x - this.coordinates.x) + Math.abs(location.y - this.coordinates.y)
                 + Math.abs(location.z - this.coordinates.z);
     }
-    public Hexahedron.HexahedronElement <Block> findestClosestNullBlock()
+    public Hexahedron.HexahedronElement <Block> findClosestNullBlock()
     {
         return game.getLblock().stream()
                 .filter(b -> b.element == null || b.element == Block.UNKNOWN)
