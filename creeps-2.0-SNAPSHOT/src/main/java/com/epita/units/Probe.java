@@ -2,13 +2,19 @@ package com.epita.units;
 
 import com.epita.Game;
 import com.epita.callables.CallableMineReport;
+import com.epita.callables.CallableUnloadReport;
+import com.epita.creeps.given.vo.Block;
+import com.epita.creeps.given.vo.geometry.Hexahedron;
 import com.epita.creeps.given.vo.report.*;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
 import com.epita.creeps.given.vo.geometry.Point;
+
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.epita.creeps.given.vo.report.Report.Status.SUCCESS;
 
@@ -62,6 +68,13 @@ public class Probe extends MovingUnits
         return report.get();
     }
 
+    public UnloadReport sendCommandGetUnloadReport(String cmd, int waitTime) throws ExecutionException, InterruptedException {
+
+        ScheduledFuture<UnloadReport> report = this.game.getTpe().schedule(new CallableUnloadReport(this, this.sendCommand(cmd).reportId)
+                , 1000 * waitTime / this.game.getTickrate(), TimeUnit.MILLISECONDS);
+        return report.get();
+    }
+
     public boolean genericMine() throws ExecutionException, InterruptedException {
         MineReport report = sendCommandGetMineReport("spawn:photoncannon", 5);
         if (report.status == SUCCESS) {
@@ -72,6 +85,31 @@ public class Probe extends MovingUnits
         return false;
     }
 
+    public boolean unload() throws ExecutionException, InterruptedException {
+        UnloadReport report = sendCommandGetUnloadReport("spawn:photoncannon", 5);
+        if (report.status == SUCCESS) {
+            return true;
+        }
+        return false;
+    }
+    public boolean canCarry()
+    {
+        return payloadBiomass < maxPayloadBiomass && payloadMinerals < maxPayloadMineral;
+    }
 
+    public int getMaxPayloadMineral() {
+        return maxPayloadMineral;
+    }
 
+    public int getMaxPayloadBiomass() {
+        return maxPayloadBiomass;
+    }
+
+    public int getPayloadBiomass() {
+        return payloadBiomass;
+    }
+
+    public int getPayloadMinerals() {
+        return payloadMinerals;
+    }
 }

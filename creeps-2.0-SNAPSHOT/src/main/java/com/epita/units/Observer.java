@@ -35,5 +35,6 @@ public class Observer extends MovingUnits
 
     public void ScanFour() throws ExecutionException, InterruptedException {
         Cartographer.INSTANCE.register(sendCommandGetScanReport("/scan:4", 1));
+
     }
 }
