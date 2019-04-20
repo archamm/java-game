@@ -1,19 +1,26 @@
 package com.epita;
 
 import com.epita.creeps.given.extra.Cartographer;
+import com.epita.creeps.given.vo.Block;
+import com.epita.creeps.given.vo.geometry.Hexahedron;
+import com.epita.creeps.given.vo.geometry.Point;
 import com.epita.creeps.given.vo.response.InitResponse;
 import com.epita.creeps.given.vo.response.StatisticsResponse;
 import com.epita.creeps.given.vo.response.StatusResponse;
 import com.epita.tools.GenericRequest;
 import com.epita.units.Nexus;
+import com.epita.units.Observer;
 import com.epita.units.Probe;
 import com.epita.units.Unit;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 /**
  * Created by: Matthieu Archambault
@@ -33,6 +40,8 @@ public class Game
     int biomass;
     int warmUpTime;
     InitResponse initResponse;
+    List <Hexahedron.HexahedronElement<Block>> lblock;
+    StatisticsResponse statisticsResponse;
 
     List <Unit> unitList;
 
@@ -42,7 +51,7 @@ public class Game
         this.tickrate = (int) initResponse.setup.ticksPerSeconds;
         System.out.println(this.tickrate);
 
-        StatisticsResponse statisticsResponse = getStatistics();
+        statisticsResponse = getStatistics();
         this.warmUpTime = statisticsResponse.scheduledGameStartTick;
         Cartographer.initialize(statisticsResponse.dimension);
 
@@ -63,7 +72,6 @@ public class Game
     }
 
     public StatisticsResponse.PlayerStatsResponse getPlayerResponse() throws UnirestException {
-        StatisticsResponse statisticsResponse = getStatistics();
         for (StatisticsResponse.PlayerStatsResponse e : statisticsResponse.players)
         {
             String name = this.login + "-" + commitHash;
@@ -75,26 +83,71 @@ public class Game
         return null;
     }
 
+    public void updateBlockList()
+    {
+        this.lblock = Cartographer.INSTANCE.stream().collect(Collectors.toList());
+    }
+
+    public List <Hexahedron.HexahedronElement <Block>> getMineralMines()
+    {
+          return lblock.stream()
+                        .filter(bl -> bl.element != null)
+                        .collect(Collectors.toList())
+                        .stream().
+                        filter(b -> b.element == Block.MINERALS_LOW || b.element == Block.MINERALS_MEDIUM || b.element == Block.MINERALS_HIGH)
+                        .collect(Collectors.toList());
+    }
+
+
+
+
     public void gameLoop() throws InterruptedException, ExecutionException, UnirestException {
         while (isRunning())
         {
             StatisticsResponse.PlayerStatsResponse playerStatsResponse = getPlayerResponse();
+            if (playerStatsResponse == null)
+            {
+                System.out.println("PlayerResponse is null");
+                return;
+
+            }
             this.minerals = playerStatsResponse.minerals;
             this.biomass = playerStatsResponse.biomass;
-            this.toString();
+            System.out.println(this.toString());
+
 
             for (int i = 0; i < unitList.size(); i++) {
                 Unit u = unitList.get(i);
+                updateBlockList();
                 if (u instanceof Nexus && minerals > 30) {
-                    if (((Nexus) u).initProbe())
-                        System.out.println("Spawned " + u.toString());
+                    if (((Nexus) u).initObserver())
+                        System.out.println("Spawned Observer");
 
                 }
                 if (u instanceof Probe) {
-                    if (((Probe) u).moveUnitWest())
-                        System.out.println("Moved " + u.toString());
+                    if (getMineralMines().size() != 0)
+                    {
+
+                        Hexahedron.HexahedronElement<Block> b = ((Probe) u).findClosest(getMineralMines());
+                        ((Probe) u).goToBlock(b.location);
+                        while (((Probe) u).canCarry())
+                            ((Probe) u).genericMine();
+                        ((Probe) u).goToBlock(((Probe) u).findClosestNexus().getCoordinates());
+                        ((Probe) u).unload();
+
+                    }
 
                 }
+                if (u instanceof Observer) {
+                    while (getMineralMines().size() == 0) {
+                        Hexahedron.HexahedronElement<Block> b = ((Observer) u).findestClosestNullBlock();
+                        ((Observer) u).goToBlock(b.location);
+                        ((Observer) u).ScanFour();
+                        System.out.println("Scan:4");
+                        updateBlockList();
+                    }
+                }
+
             }
         }
 
@@ -117,9 +170,13 @@ public class Game
     }
 
 
+
+
+
     public List<Unit> getUnitList() {
         return unitList;
     }
+
 
     public String getUrl() {
         return url;
@@ -159,6 +216,10 @@ public class Game
 
     public InitResponse getInitResponse() {
         return initResponse;
+    }
+
+    public List<Hexahedron.HexahedronElement<Block>> getLblock() {
+        return lblock;
     }
 
     @Override
