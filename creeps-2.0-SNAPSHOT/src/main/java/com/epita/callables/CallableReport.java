@@ -1,8 +1,9 @@
-package com.epita.tools;
+package com.epita.callables;
 
 import com.epita.creeps.given.vo.report.MoveReport;
 import com.epita.creeps.given.vo.report.Report;
 import com.epita.creeps.given.vo.response.CommandResponse;
+import com.epita.tools.GenericRequest;
 import com.epita.units.Unit;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
