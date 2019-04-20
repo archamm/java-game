@@ -25,40 +25,64 @@ public class MovingUnits extends Unit
         return report.get();
     }
 
-    public void moveUnitUp() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean moveUnitUp() throws UnirestException, ExecutionException, InterruptedException {
         MoveReport report = sendCommandGetMoveReport( "/move:up", 1);
         if (report.status == SUCCESS)
+        {
             SearchAndReplaceCoordinates(report.agentLocation);
+            return true;
+        }
+        return false;
     }
 
-    public void moveUnitDown() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean moveUnitDown() throws UnirestException, ExecutionException, InterruptedException {
         MoveReport report = sendCommandGetMoveReport( "/move:down", 1);
         if (report.status == SUCCESS)
+        {
             SearchAndReplaceCoordinates(report.agentLocation);
+            return true;
+        }
+        return false;
     }
 
-    public void moveUnitEast() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean moveUnitEast() throws UnirestException, ExecutionException, InterruptedException {
         MoveReport report = sendCommandGetMoveReport( "/move:east", 1);
         if (report.status == SUCCESS)
+        {
             SearchAndReplaceCoordinates(report.agentLocation);
+            return true;
+        }
+        return false;
     }
 
-    public void moveUnitWest() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean moveUnitWest() throws UnirestException, ExecutionException, InterruptedException {
         MoveReport report = sendCommandGetMoveReport( "/move:west", 1);
         if (report.status == SUCCESS)
+        {
             SearchAndReplaceCoordinates(report.agentLocation);
+            return true;
+        }
+        return false;
     }
 
-    public void moveUnitNorth() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean moveUnitNorth() throws UnirestException, ExecutionException, InterruptedException {
         MoveReport report = sendCommandGetMoveReport( "/move:north", 1);
         if (report.status == SUCCESS)
+        {
             SearchAndReplaceCoordinates(report.agentLocation);
+            return true;
+        }
+        return false;
     }
 
-    public void moveUnitSouth() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean moveUnitSouth() throws UnirestException, ExecutionException, InterruptedException {
         MoveReport report = sendCommandGetMoveReport( "/move:south", 1);
         if (report.status == SUCCESS)
+        {
             SearchAndReplaceCoordinates(report.agentLocation);
+            return true;
+        }
+        return false;
     }
 
     public ScanReport sendCommandGetScanReport(String cmd, int waitTime) throws ExecutionException, InterruptedException {
