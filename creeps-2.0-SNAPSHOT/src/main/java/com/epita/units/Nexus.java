@@ -32,24 +32,33 @@ public class Nexus extends Unit
     }
 
 
-    public void initProbe() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean initProbe() throws UnirestException, ExecutionException, InterruptedException {
         SpawnReport report = sendCommandGetSpawnReport("/spawn:probe", 3);
-        if (report.status == SUCCESS)
+        if (report.status == SUCCESS) {
             this.game.getUnitList().add(new Probe(this.game, report.agentLocation, report.spawnedAgentId));
+            return true;
+        }
+        return false;
 
 
     }
 
-    public void initDragoon() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean initDragoon() throws UnirestException, ExecutionException, InterruptedException {
         SpawnReport report = sendCommandGetSpawnReport("/spawn:dragoon", 2);
-        if (report.status == SUCCESS)
+        if (report.status == SUCCESS) {
             this.game.getUnitList().add(new Dragoon(this.game, report.agentLocation, report.spawnedAgentId));
+            return true;
+        }
+        return false;
     }
 
-    public void initObserver() throws UnirestException, ExecutionException, InterruptedException {
+    public boolean initObserver() throws UnirestException, ExecutionException, InterruptedException {
         SpawnReport report =  sendCommandGetSpawnReport("/spawn:observer", 5);
-        if (report.status == SUCCESS)
-            this.game.getUnitList().add(new Observer(this.game, report.agentLocation, report.spawnedAgentId));
+        if (report.status == SUCCESS) {
+            this.game.getUnitList().add(new Probe(this.game, report.agentLocation, report.spawnedAgentId));
+            return true;
+        }
+        return false;
     }
 
 
