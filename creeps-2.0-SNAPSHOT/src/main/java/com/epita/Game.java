@@ -3,7 +3,6 @@ package com.epita;
 import com.epita.creeps.given.extra.Cartographer;
 import com.epita.creeps.given.vo.Block;
 import com.epita.creeps.given.vo.geometry.Hexahedron;
-import com.epita.creeps.given.vo.geometry.Point;
 import com.epita.creeps.given.vo.response.InitResponse;
 import com.epita.creeps.given.vo.response.StatisticsResponse;
 import com.epita.creeps.given.vo.response.StatusResponse;
@@ -15,11 +14,10 @@ import com.epita.units.Unit;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -48,10 +46,29 @@ public class Game
     public void initGame() throws UnirestException {
         this.initResponse = GenericRequest.genericPost(url + "/init/" + this.login + "-" + this.commitHash
                 , InitResponse.class);
+
         this.tickrate = (int) initResponse.setup.ticksPerSeconds;
         System.out.println(this.tickrate);
 
+
+
         statisticsResponse = getStatistics();
+        if (!statisticsResponse.gameRunning)
+        {
+            System.out.println("Game is not Running");
+            return;
+        }
+
+        for (StatisticsResponse.PlayerStatsResponse e : statisticsResponse.players)
+        {
+            String name = this.login + "-" + commitHash;
+            if (name.equals(e.name))
+            {
+                this.minerals = e.minerals;
+                this.biomass = e.biomass;
+                break;
+            }
+        }
         this.warmUpTime = statisticsResponse.scheduledGameStartTick;
         Cartographer.initialize(statisticsResponse.dimension);
 
@@ -102,52 +119,26 @@ public class Game
 
 
     public void gameLoop() throws InterruptedException, ExecutionException, UnirestException {
+
+        GameManager gameManager = new GameManager(this);
+        gameManager.getNumberOfInstance();
         while (isRunning())
         {
-            StatisticsResponse.PlayerStatsResponse playerStatsResponse = getPlayerResponse();
-            if (playerStatsResponse == null)
-            {
-                System.out.println("PlayerResponse is null");
-                return;
+            gameManager.getNumberOfInstance();
 
-            }
-            this.minerals = playerStatsResponse.minerals;
-            this.biomass = playerStatsResponse.biomass;
-            System.out.println(this.toString());
-
-
-            for (int i = 0; i < unitList.size(); i++) {
+                for (int i = 0; i < unitList.size(); i++) {
                 Unit u = unitList.get(i);
                 updateBlockList();
-                if (u instanceof Nexus && minerals > 30) {
-                    if (((Nexus) u).initObserver())
-                        System.out.println("Spawned Observer");
+                if (u instanceof Nexus) {
 
+                    gameManager.manageNexus((Nexus) u);
                 }
                 if (u instanceof Probe) {
-                    if (getMineralMines().size() != 0)
-                    {
-
-                        Hexahedron.HexahedronElement<Block> b = ((Probe) u).findClosest(getMineralMines());
-                        ((Probe) u).goToBlock(b.location);
-                        while (((Probe) u).canCarry())
-                            ((Probe) u).genericMine();
-                        ((Probe) u).goToBlock(((Probe) u).findClosestNexus().getCoordinates());
-                        ((Probe) u).unload();
-
-                    }
-
+                    gameManager.manageProbe((Probe) u);
                 }
                 if (u instanceof Observer) {
-                    while (getMineralMines().size() == 0) {
-                        Hexahedron.HexahedronElement<Block> b = ((Observer) u).findestClosestNullBlock();
-                        ((Observer) u).goToBlock(b.location);
-                        ((Observer) u).ScanFour();
-                        System.out.println("Scan:4");
-                        updateBlockList();
-                    }
+                    gameManager.manageObservers((Observer) u);
                 }
-
             }
         }
 
@@ -162,12 +153,22 @@ public class Game
         this.initGame();
 
         if(!isRunning()) {
-            Thread.sleep(this.warmUpTime * 1000 / this.tickrate);
+            this.tpe.schedule(() -> {
+                try {
+                    gameLoop();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (UnirestException e) {
+                    e.printStackTrace();
+                }
+            }, this.warmUpTime * 1000 / this.tickrate, TimeUnit.MILLISECONDS);
         }
+            else
+                gameLoop();
 
-        gameLoop();
-
-    }
+        }
 
 
 
@@ -200,6 +201,14 @@ public class Game
 
     public int getMinerals() {
         return minerals;
+    }
+
+    public void setMinerals(int minerals) {
+        this.minerals = minerals;
+    }
+
+    public void setBiomass(int biomass) {
+        this.biomass = biomass;
     }
 
     public int getBiomass() {
