@@ -7,7 +7,7 @@ import com.epita.creeps.given.vo.geometry.Point;
  * Created by: Matthieu Archambault
  * On 2019-04-20 09:24
  */
-public class Dragoon extends Unit
+public class Dragoon extends MovingUnits
 {
     public Dragoon(Game game, Point coordinates, String agentId)
     {
