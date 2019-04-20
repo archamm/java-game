@@ -32,21 +32,22 @@ public class Game
     int minerals;
     int biomass;
     int warmUpTime;
+    InitResponse initResponse;
 
     List <Unit> unitList;
 
     public void initGame() throws UnirestException {
-        InitResponse b = GenericRequest.genericPost(url + "/init/" + this.login + "-" + this.commitHash
+        this.initResponse = GenericRequest.genericPost(url + "/init/" + this.login + "-" + this.commitHash
                 , InitResponse.class);
-        this.tickrate = (int) b.setup.ticksPerSeconds;
+        this.tickrate = (int) initResponse.setup.ticksPerSeconds;
         System.out.println(this.tickrate);
 
         StatisticsResponse statisticsResponse = getStatistics();
         this.warmUpTime = statisticsResponse.scheduledGameStartTick;
         Cartographer.initialize(statisticsResponse.dimension);
 
-        unitList.add(new Nexus(this, b.coordinates, b.baseId));
-        unitList.add(new Probe(this, b.coordinates, b.probeId));
+        unitList.add(new Nexus(this, initResponse.coordinates, initResponse.baseId));
+        unitList.add(new Probe(this, initResponse.coordinates, initResponse.probeId));
     }
 
     public boolean isRunning() throws UnirestException {
@@ -80,14 +81,19 @@ public class Game
             StatisticsResponse.PlayerStatsResponse playerStatsResponse = getPlayerResponse();
             this.minerals = playerStatsResponse.minerals;
             this.biomass = playerStatsResponse.biomass;
+            this.toString();
 
             for (int i = 0; i < unitList.size(); i++) {
                 Unit u = unitList.get(i);
-                if (u instanceof Nexus) {
-                    ((Nexus) u).initProbe();
+                if (u instanceof Nexus && minerals > 30) {
+                    if (((Nexus) u).initProbe())
+                        System.out.println("Spawned " + u.toString());
+
                 }
                 if (u instanceof Probe) {
-                    ((Probe) u).moveUnitWest();
+                    if (((Probe) u).moveUnitWest())
+                        System.out.println("Moved " + u.toString());
+
                 }
             }
         }
@@ -97,7 +103,7 @@ public class Game
         this.url = url;
         this.login = login;
         this.commitHash = commitHash;
-        this.tpe = new ScheduledThreadPoolExecutor(8);
+        this.tpe = new ScheduledThreadPoolExecutor(50);
         this.unitList = new ArrayList<>();
 
         this.initGame();
@@ -141,5 +147,25 @@ public class Game
 
     public int getBiomass() {
         return biomass;
+    }
+
+    public int getTicks() {
+        return ticks;
+    }
+
+    public int getWarmUpTime() {
+        return warmUpTime;
+    }
+
+    public InitResponse getInitResponse() {
+        return initResponse;
+    }
+
+    @Override
+    public String toString() {
+        return "Game{" +
+                "minerals=" + minerals +
+                ", biomass=" + biomass +
+                '}';
     }
 }

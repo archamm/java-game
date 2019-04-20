@@ -1,19 +1,6 @@
 package com.epita.creeps;
 import com.epita.Game;
-import com.epita.creeps.given.vo.report.MoveReport;
-import com.epita.creeps.given.vo.report.Report;
-import com.epita.creeps.given.vo.report.SpawnReport;
-import com.epita.creeps.given.vo.response.CommandResponse;
-import com.epita.creeps.given.vo.response.InitResponse;
-import com.epita.tools.GenericRequest;
-import com.epita.tools.Requests;
-import com.epita.units.MovingUnits;
-import com.epita.units.Nexus;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import com.epita.creeps.given.json.*;
 
 import java.util.concurrent.*;
 
@@ -23,10 +10,9 @@ public class Program {
     public static void main(String[] args) throws UnirestException, ExecutionException, InterruptedException {
 
 
-        String urlepita = "http://rush.assistants.epita.fr:1677";
+        String urlepita = "http://rush.assistants.epita.fr:1685";
         String urllocal = "http://localhost:1664";
-        String url = urllocal;
-        Game game = new Game(urllocal, "archam_m", "test");
+        Game game = new Game(urllocal, "archam_m", "d6ec8f5");
         /*
         try
         {

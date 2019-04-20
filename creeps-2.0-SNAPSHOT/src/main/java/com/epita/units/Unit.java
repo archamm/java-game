@@ -31,10 +31,12 @@ public class Unit {
     }
 
     public CommandResponse sendCommand(String cmd) throws ExecutionException, InterruptedException {
-        Callable<CommandResponse> callableRes = null;
             Future<CommandResponse> res = this.game.getTpe().submit(new CallableCommand(this, cmd));
             return res.get();
         }
+
+
+
 
     public void SearchAndReplaceCoordinates(Point point)
     {
