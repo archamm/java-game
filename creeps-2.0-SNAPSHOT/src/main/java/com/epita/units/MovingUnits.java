@@ -3,9 +3,11 @@ package com.epita.units;
 import com.epita.callables.CallableInspectReport;
 import com.epita.callables.CallableMoveReport;
 import com.epita.callables.CallableScanReport;
+import com.epita.creeps.given.extra.Cartographer;
 import com.epita.creeps.given.vo.Block;
 import com.epita.creeps.given.vo.geometry.Hexahedron;
 import com.epita.creeps.given.vo.geometry.Point;
+import com.epita.creeps.given.vo.report.ConvertReport;
 import com.epita.creeps.given.vo.report.MoveReport;
 import com.epita.creeps.given.vo.report.ScanReport;
 import com.epita.creeps.given.vo.report.SpawnReport;
@@ -64,6 +66,39 @@ public class MovingUnits extends Unit
                 , 1000 * waitTime / this.game.getTickrate(), TimeUnit.MILLISECONDS);
     }
 
+    public void sendCommandGetCovertReport(int waitTime) throws ExecutionException, InterruptedException {
+        if (action)
+            return;
+        action = true;
+        CommandResponse response = sendCommand("convert");
+        this.game.getTpe().schedule(() -> {
+                    try {
+                        ConvertReport res = GenericRequest.genericGet(this.getGame().getUrl()
+                                + "/report/" + response.reportId, ConvertReport.class);
+                        if (res.status != SUCCESS) {
+                            this.action = false;
+                            return;
+                        }
+                        if (this instanceof Probe) {
+                            ((Probe) this).resourceLeftMinerals = 0;
+                            ((Probe) this).resourceLeftBiomass = 0;
+                        }
+                        Cartographer.INSTANCE.register(res.agentLocation, Block.valueOf(this.game.getInitResponse().blockType));
+                        this.game.updateBlockList();
+                        System.out.println(coordinates.toString());
+
+                        this.action = false;
+                    } catch (UnirestException e) {
+                        e.printStackTrace();
+                    }
+                }
+                , 1000 * waitTime / this.game.getTickrate(), TimeUnit.MILLISECONDS);
+    }
+
+    public void convert() throws ExecutionException, InterruptedException {
+        sendCommandGetCovertReport(2);
+    }
+
 
 
     public void moveUnitUp() throws UnirestException, ExecutionException, InterruptedException {
@@ -96,14 +131,19 @@ public class MovingUnits extends Unit
     }
 
 
+
     public boolean findAnyMineralMine()
     {
         return this.game.getLblock().stream().anyMatch(b -> b.element != null);
     }
 
+    public boolean isOnBlock(Point location)
+    {
+        return this.coordinates.equals(location);
+    }
+
     public void goToBlock(Point location) throws InterruptedException, ExecutionException, UnirestException {
-        while (!this.coordinates.equals(location))
-        {
+
             int disx = location.x - this.coordinates.x;
             int disy = location.y - this.coordinates.y;
             int disz = location.z - this.coordinates.z;
@@ -128,7 +168,7 @@ public class MovingUnits extends Unit
                 else
                     this.moveUnitNorth();
             }
-        }
+
     }
 
     public double distanceTo(Point location)
