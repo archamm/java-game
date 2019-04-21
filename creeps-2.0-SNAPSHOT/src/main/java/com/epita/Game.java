@@ -3,14 +3,12 @@ package com.epita;
 import com.epita.creeps.given.extra.Cartographer;
 import com.epita.creeps.given.vo.Block;
 import com.epita.creeps.given.vo.geometry.Hexahedron;
+import com.epita.creeps.given.vo.geometry.Point;
 import com.epita.creeps.given.vo.response.InitResponse;
 import com.epita.creeps.given.vo.response.StatisticsResponse;
 import com.epita.creeps.given.vo.response.StatusResponse;
 import com.epita.tools.GenericRequest;
-import com.epita.units.Nexus;
-import com.epita.units.Observer;
-import com.epita.units.Probe;
-import com.epita.units.Unit;
+import com.epita.units.*;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
 import java.util.ArrayList;
@@ -40,7 +38,13 @@ public class Game
     InitResponse initResponse;
     List <Hexahedron.HexahedronElement<Block>> lblock;
     StatisticsResponse statisticsResponse;
+    int numberOfObservers;
+    int numberOfProbes;
+    int numberOfNexus;
+    int numberOfPhoton;
+    int numberOfDragoon;
 
+    List <Point> assignedMined;
     List <Unit> unitList;
 
     public void initGame() throws UnirestException {
@@ -53,11 +57,6 @@ public class Game
 
 
         statisticsResponse = getStatistics();
-        if (!statisticsResponse.gameRunning)
-        {
-            System.out.println("Game is not Running");
-            return;
-        }
 
         for (StatisticsResponse.PlayerStatsResponse e : statisticsResponse.players)
         {
@@ -120,24 +119,22 @@ public class Game
 
     public void gameLoop() throws InterruptedException, ExecutionException, UnirestException {
 
-        GameManager gameManager = new GameManager(this);
-        gameManager.getNumberOfInstance();
+
         while (isRunning())
         {
-            gameManager.getNumberOfInstance();
-
+                this.getNumberofInstance();
                 for (int i = 0; i < unitList.size(); i++) {
                 Unit u = unitList.get(i);
                 updateBlockList();
                 if (u instanceof Nexus) {
 
-                    gameManager.manageNexus((Nexus) u);
+                    this.manageNexus((Nexus) u);
                 }
                 if (u instanceof Probe) {
-                    gameManager.manageProbe((Probe) u);
+                    this.manageProbe((Probe) u);
                 }
                 if (u instanceof Observer) {
-                    gameManager.manageObservers((Observer) u);
+                    this.manageObservers((Observer) u);
                 }
             }
         }
@@ -238,4 +235,110 @@ public class Game
                 ", biomass=" + biomass +
                 '}';
     }
+
+    public void goExplore (MovingUnits u) throws InterruptedException, ExecutionException, UnirestException {
+        Hexahedron.HexahedronElement<Block> b = u.findClosestNullBlock();
+        if (!u.isOnBlock(b.location))
+            u.goToBlock(b.location);
+        else {
+            if (u instanceof Observer)
+                ((Observer) u).ScanFour();
+            else
+                ((Probe) u).convert();
+        }
+
+        this.updateBlockList();
+    }
+
+    public void goMine (Probe u) throws InterruptedException, ExecutionException, UnirestException {
+        if (u.getPayloadMinerals() < this.initResponse.setup.maxProbeMineralsLoad){
+            Hexahedron.HexahedronElement<Block> b = u.findClosest(this.getMineralMines());
+            if (!u.isOnBlock(b.location))
+                u.goToBlock(b.location);
+            else {
+                u.mineMinerals();
+            }
+        }
+        else {
+            if (!u.isOnBlock(u.findClosestNexus().getCoordinates()))
+                u.goToBlock(u.findClosestNexus().getCoordinates());
+            else
+                u.unload();
+        }
+
+    }
+
+
+    public void manageProbe (Probe u) throws InterruptedException, ExecutionException, UnirestException {
+        if (this.getMineralMines().size() != 0 && getTotalNumberofInstance() < 40) {
+            goMine(u);
+        } else {
+            goExplore(u);
+        }
+    }
+
+
+
+    public void manageObservers (Observer o) throws InterruptedException, ExecutionException, UnirestException {
+        goExplore(o);
+    }
+
+    public void getNumberofInstance()
+    {
+        numberOfObservers = 0;
+        numberOfProbes = 0;
+        numberOfNexus = 0;
+        numberOfDragoon = 0;
+        numberOfPhoton = 0;
+
+        for (Unit e : unitList)
+        {
+            if (e instanceof Probe)
+                numberOfProbes++;
+            if (e instanceof Nexus)
+                numberOfNexus++;
+            if (e instanceof Dragoon)
+                numberOfDragoon++;
+            if (e instanceof Observer)
+                numberOfObservers++;
+            if (e instanceof PhotonCannon)
+                numberOfPhoton++;
+        }
+
+    }
+
+    public int getTotalNumberofInstance()
+    {
+        this.getNumberofInstance();
+        return numberOfObservers + numberOfPhoton + numberOfDragoon + numberOfProbes + numberOfObservers;
+
+    }
+
+    public void manageNexus (Nexus nexus) throws InterruptedException, ExecutionException, UnirestException {
+
+        if (numberOfObservers < 3) {
+            numberOfObservers++;
+            nexus.initObserver();
+            if (!nexus.isAction()) {
+                numberOfObservers++;
+                System.out.println("Spawn Observer");
+            }
+        }
+        if (numberOfProbes < 40 && this.getMinerals() > this.initResponse.costs.spawnProbe.minerals) {
+            nexus.initProbe();
+            if (!nexus.isAction()) {
+                System.out.println("Spawn Probe");
+
+            }
+        }
+
+        if (this.getMinerals() > this.initResponse.costs.spawnDragoon.minerals){
+            nexus.initDragoon();
+            if (!nexus.isAction()) {
+                System.out.println("Spawn Probe");
+
+            }
+        }
+    }
+
 }
