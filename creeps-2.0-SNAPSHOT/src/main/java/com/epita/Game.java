@@ -68,6 +68,12 @@ public class Game
                 break;
             }
         }
+        if (minerals == 0)
+        {
+            this.minerals = 300;
+            this.biomass = 300;
+
+        }
         this.warmUpTime = statisticsResponse.scheduledGameStartTick;
         Cartographer.initialize(statisticsResponse.dimension);
 
@@ -114,11 +120,21 @@ public class Game
                         .collect(Collectors.toList());
     }
 
+    public List <Hexahedron.HexahedronElement <Block>> getBiomassMines()
+    {
+        return lblock.stream()
+                .filter(bl -> bl.element != null)
+                .collect(Collectors.toList())
+                .stream().
+                        filter(b -> b.element == Block.BIOMASS_LOW || b.element == Block.BIOMASS_MEDIUM || b.element == Block.BIOMASS_HIGH)
+                .collect(Collectors.toList());
+    }
+
 
 
 
     public void gameLoop() throws InterruptedException, ExecutionException, UnirestException {
-
+        System.out.println(this.toString());
 
         while (isRunning())
         {
@@ -250,7 +266,7 @@ public class Game
         this.updateBlockList();
     }
 
-    public void goMine (Probe u) throws InterruptedException, ExecutionException, UnirestException {
+    public void goMineMinerals(Probe u) throws InterruptedException, ExecutionException, UnirestException {
         if (u.getPayloadMinerals() < this.initResponse.setup.maxProbeMineralsLoad){
             Hexahedron.HexahedronElement<Block> b = u.findClosest(this.getMineralMines());
             if (!u.isOnBlock(b.location))
@@ -268,11 +284,30 @@ public class Game
 
     }
 
+    public void goMineBiomass (Probe u) throws InterruptedException, ExecutionException, UnirestException {
+        if (u.getPayloadBiomass() < this.initResponse.setup.maxProbeBiomassLoad){
+            Hexahedron.HexahedronElement<Block> b = u.findClosest(this.getBiomassMines());
+            if (!u.isOnBlock(b.location))
+                u.goToBlock(b.location);
+            else {
+                u.mineBiomass();
+            }
+        }
+        else {
+            if (!u.isOnBlock(u.findClosestNexus().getCoordinates()))
+                u.goToBlock(u.findClosestNexus().getCoordinates());
+            else
+                u.unload();
+        }
+
+    }
+
 
     public void manageProbe (Probe u) throws InterruptedException, ExecutionException, UnirestException {
-        if (this.getMineralMines().size() != 0 && getTotalNumberofInstance() < 40) {
-            goMine(u);
-        } else {
+        if (this.getMineralMines().size() != 0 && this.getMinerals() < 500) {
+            goMineMinerals(u);
+        }
+        else {
             goExplore(u);
         }
     }
@@ -315,7 +350,6 @@ public class Game
     }
 
     public void manageNexus (Nexus nexus) throws InterruptedException, ExecutionException, UnirestException {
-
         if (numberOfObservers < 3) {
             numberOfObservers++;
             nexus.initObserver();
@@ -324,7 +358,7 @@ public class Game
                 System.out.println("Spawn Observer");
             }
         }
-        if (numberOfProbes < 40 && this.getMinerals() > this.initResponse.costs.spawnProbe.minerals) {
+        if (numberOfProbes < 37 && this.getMinerals() > this.initResponse.costs.spawnProbe.minerals) {
             nexus.initProbe();
             if (!nexus.isAction()) {
                 System.out.println("Spawn Probe");
@@ -332,13 +366,7 @@ public class Game
             }
         }
 
-        if (this.getMinerals() > this.initResponse.costs.spawnDragoon.minerals){
-            nexus.initDragoon();
-            if (!nexus.isAction()) {
-                System.out.println("Spawn Probe");
 
-            }
-        }
     }
 
 }
