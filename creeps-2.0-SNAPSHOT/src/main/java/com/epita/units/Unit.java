@@ -7,6 +7,7 @@ import com.epita.creeps.given.extra.Cartographer;
 import com.epita.creeps.given.vo.Block;
 import com.epita.creeps.given.vo.geometry.Hexahedron;
 import com.epita.creeps.given.vo.report.InspectReport;
+import com.epita.creeps.given.vo.report.ReleaseReport;
 import com.epita.creeps.given.vo.report.Report;
 import com.epita.creeps.given.vo.report.SpawnReport;
 import com.epita.creeps.given.vo.response.CommandResponse;
@@ -91,6 +92,32 @@ public class Unit {
                 , 1000 * waitTime / this.game.getTickrate(), TimeUnit.MILLISECONDS);
     }
 
+    public void sendCommandGetRealeaseReport(int waitTime) throws ExecutionException, InterruptedException {
+        if (action)
+            return;
+        action = true;
+        CommandResponse response = sendCommand("/release");
+        this.game.getTpe().schedule(() -> {
+                    try {
+                        ReleaseReport res = GenericRequest.genericGet(this.getGame().getUrl()
+                                + "/report/" + response.reportId, ReleaseReport.class);
+                        if (res.status != SUCCESS) {
+                            this.action = false;
+                            return;
+                        }
+
+
+                        this.action = false;
+                    } catch (UnirestException e) {
+                        e.printStackTrace();
+                    }
+                }
+                , 1000 * waitTime / this.game.getTickrate(), TimeUnit.MILLISECONDS);
+    }
+
+    public void release(int waitTime) throws ExecutionException, InterruptedException {
+        sendCommandGetRealeaseReport(waitTime);
+    }
 
     public CommandResponse sendCommand(String cmd) throws ExecutionException, InterruptedException {
             Future<CommandResponse> res = this.game.getTpe().submit(new CallableCommand(this, cmd));
