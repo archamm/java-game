@@ -56,11 +56,15 @@ public class Probe extends Farmers
 
 
     public void initNexus() throws UnirestException, ExecutionException, InterruptedException {
-            sendCommandGetSpawnReport("/spawn:nexus", 10);
+            sendCommandGetSpawnReport("nexus", 10);
         }
 
+    public void initPylon() throws UnirestException, ExecutionException, InterruptedException {
+        sendCommandGetSpawnReport("pylon", 4);
+    }
+
     public void initPhotonCanon() throws UnirestException, ExecutionException, InterruptedException {
-            sendCommandGetSpawnReport("spawn:photoncannon", 5);
+            sendCommandGetSpawnReport("photon-cannon", 5);
     }
 
     public void sendCommandGetMineReport(String minerals, int waitTime) throws ExecutionException, InterruptedException {
@@ -83,6 +87,8 @@ public class Probe extends Farmers
                         resourceLeftMinerals = res.resourcesLeft.minerals;
                         resourceLeftBiomass = res.resourcesLeft.biomass;
                         System.out.println("ressourceLeftMineral:" + resourceLeftMinerals + " on" + res.agentId.toString());
+                        System.out.println("ressourceLeftBiomass:" + resourceLeftBiomass + " on" + res.agentId.toString());
+
                         System.out.println(this.game.toString());
                         this.action = false;
                     } catch (UnirestException e) {
@@ -126,9 +132,11 @@ public class Probe extends Farmers
     public void mineMinerals() throws ExecutionException, InterruptedException {
         sendCommandGetMineReport("minerals", 1);
     }
-    public void setMineralsOrBiomass() throws ExecutionException, InterruptedException {
+
+    public void mineBiomass() throws ExecutionException, InterruptedException {
         sendCommandGetMineReport("biomass", 1);
     }
+
 
     public void unload() throws ExecutionException, InterruptedException {
         sendCommandGetUnloadReport(5);
