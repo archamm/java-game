@@ -3,6 +3,8 @@ package com.epita.units;
 import com.epita.Game;
 import com.epita.callables.CallableMineReport;
 import com.epita.callables.CallableUnloadReport;
+import com.epita.creeps.given.extra.Cartographer;
+import com.epita.creeps.given.vo.AgentStatus;
 import com.epita.creeps.given.vo.Block;
 import com.epita.creeps.given.vo.geometry.Hexahedron;
 import com.epita.creeps.given.vo.report.*;
@@ -33,11 +35,12 @@ public class Probe extends Farmers
     int payloadMinerals;
     int resourceLeftMinerals;
     int resourceLeftBiomass;
+    boolean hasMined;
 
     public Probe(Game game, Point coordinates, String agentId)
     {
 
-
+        this.hasMined = false;
         this.action = false;
         this.game = game;
         this.coordinates = coordinates;
@@ -75,9 +78,12 @@ public class Probe extends Farmers
                         }
                         payloadMinerals = res.payload.minerals;
                         payloadBiomass = res.payload.biomass;
+                        if (resourceLeftMinerals <= 0)
+                            Cartographer.INSTANCE.register(res.agentLocation, Block.valueOf(this.game.getInitResponse().blockType));
                         resourceLeftMinerals = res.resourcesLeft.minerals;
                         resourceLeftBiomass = res.resourcesLeft.biomass;
-
+                        System.out.println("ressourceLeftMineral:" + resourceLeftMinerals + " on" + res.agentId.toString());
+                        System.out.println(this.game.toString());
                         this.action = false;
                     } catch (UnirestException e) {
                         e.printStackTrace();
@@ -102,8 +108,11 @@ public class Probe extends Farmers
                         this.game.setMinerals(this.game.getMinerals() + res.creditedMinerals);
                         this.game.setBiomass(this.game.getBiomass() + res.creditedBiomass);
 
+                        this.payloadBiomass = 0;
+                        this.payloadMinerals = 0;
                         this.resourceLeftMinerals = 50;
                         this.resourceLeftBiomass = 50;
+                        this.hasMined = false;
 
                         this.action = false;
                     } catch (UnirestException e) {
@@ -124,12 +133,16 @@ public class Probe extends Farmers
     public void unload() throws ExecutionException, InterruptedException {
         sendCommandGetUnloadReport(5);
     }
-    public boolean canCarry()
+
+    public boolean isFull()
     {
-        return payloadBiomass < maxPayloadBiomass
-                && payloadMinerals < maxPayloadMineral
-                && resourceLeftBiomass != 0
-                && resourceLeftMinerals != 0;
+        return maxPayloadMineral <= payloadMinerals ||
+                maxPayloadBiomass <= payloadBiomass;
+    }
+
+    public boolean isEmpty()
+    {
+        return resourceLeftMinerals == 0 || resourceLeftBiomass == 0;
     }
 
     public int getMaxPayloadMineral() {
@@ -157,5 +170,13 @@ public class Probe extends Farmers
                 ", payloadBiomass=" + payloadBiomass +
                 ", payloadMinerals=" + payloadMinerals +
                 '}';
+    }
+
+    public boolean getHasMined() {
+        return hasMined;
+    }
+
+    public void setHasMined(boolean hasMined) {
+        this.hasMined = hasMined;
     }
 }
