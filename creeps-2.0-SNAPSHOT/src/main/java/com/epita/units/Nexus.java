@@ -30,12 +30,11 @@ public class Nexus extends Unit
     }
 
     public void initDragoon() throws UnirestException, ExecutionException, InterruptedException {
-        sendCommandGetSpawnReport("dragoon", 3);
+        sendCommandGetSpawnReport("dragoon", 5);
     }
 
     public void initObserver() throws UnirestException, ExecutionException, InterruptedException {
-        sendCommandGetSpawnReport("observer", 3);
+        sendCommandGetSpawnReport("observer", 2);
     }
-
 
 }
