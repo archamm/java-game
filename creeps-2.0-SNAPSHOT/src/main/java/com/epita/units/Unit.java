@@ -51,15 +51,37 @@ public class Unit {
                             return;
                         }
                         if (unit.equals("probe"))
+                        {
+                            this.game.setMinerals(this.game.getMinerals() - this.game.getInitResponse().costs.spawnProbe.minerals);
+                            this.game.setBiomass(this.game.getBiomass() - this.game.getInitResponse().costs.spawnProbe.biomass);
+
                             this.game.getUnitList().add(new Probe(this.game, res.spawnedAgentLocation, res.spawnedAgentId));
-                        if (unit.equals("nexus"))
+
+                        }
+                        if (unit.equals("nexus")) {
+                            this.game.setMinerals(this.game.getMinerals() - this.game.getInitResponse().costs.spawnNexus.minerals);
+                            this.game.setBiomass(this.game.getBiomass() - this.game.getInitResponse().costs.spawnNexus.biomass);
+
                             this.game.getUnitList().add(new Nexus(this.game, res.spawnedAgentLocation, res.spawnedAgentId));
-                        if (unit.equals("photoncannon"))
+                        }
+                        if (unit.equals("photoncannon")) {
+                            this.game.setMinerals(this.game.getMinerals() - this.game.getInitResponse().costs.spawnPhotonCannon.minerals);
+                            this.game.setBiomass(this.game.getBiomass() - this.game.getInitResponse().costs.spawnPhotonCannon.biomass);
+
                             this.game.getUnitList().add(new PhotonCannon(this.game, res.spawnedAgentLocation, res.spawnedAgentId));
-                        if (unit.equals("observer"))
+                        }
+                        if (unit.equals("observer")) {
+                            this.game.setMinerals(this.game.getMinerals() - this.game.getInitResponse().costs.spawnObserver.minerals);
+                            this.game.setBiomass(this.game.getBiomass() - this.game.getInitResponse().costs.spawnObserver.biomass);
+
                             this.game.getUnitList().add(new Observer(this.game, res.spawnedAgentLocation, res.spawnedAgentId));
-                        if (unit.equals("dragoon"))
+                        }
+                        if (unit.equals("dragoon")){
+                            this.game.setMinerals(this.game.getMinerals() - this.game.getInitResponse().costs.spawnDragoon.minerals);
+                            this.game.setBiomass(this.game.getBiomass() - this.game.getInitResponse().costs.spawnDragoon.biomass);
+
                             this.game.getUnitList().add(new Dragoon(this.game, res.spawnedAgentLocation, res.spawnedAgentId));
+                        }
 
                         this.action = false;
                     } catch (UnirestException e) {
