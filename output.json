@@ -1,0 +1,33 @@
+{
+  "serverId" : "d35c814d5",
+  "gameRunning" : true,
+  "tick" : 1210,
+  "scheduledGameStartTick" : 3600,
+  "scheduledGameEndTick" : 1200,
+  "hordeWave" : 0,
+  "hectorRuns" : 0,
+  "dimension" : {
+    "x" : 64,
+    "y" : 48,
+    "z" : 64
+  },
+  "players" : [ {
+    "name" : "archam_m---6b0b01e",
+    "status" : "ALIVE",
+    "agentsPerType" : {
+      "nexus" : 1,
+      "observer" : 3
+    },
+    "blocks" : 1,
+    "minerals" : 10,
+    "biomass" : 300,
+    "achievements" : [ "Christopher Colombus", "It's Aliiiiivvvve!", "A Friend Of Mine", "Without You", "Miners United", "Oscar Mike" ],
+    "agents" : 4
+  } ],
+  "freeSpace" : 196607,
+  "agentsPerType" : {
+    "nexus" : 1,
+    "observer" : 3
+  },
+  "agents" : 4
+}
